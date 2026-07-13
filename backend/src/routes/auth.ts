@@ -51,7 +51,7 @@ router.post("/login", async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ message: "Invalid username or password" })
     }
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "1d" })
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "1m" })
 
     return res.json({
       message: "Login Successful!",

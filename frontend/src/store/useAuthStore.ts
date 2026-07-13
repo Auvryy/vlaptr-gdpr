@@ -7,7 +7,7 @@ interface User {
 }
 
 interface AuthState {
-  user: any | null;
+  user: User | null;
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -15,11 +15,43 @@ interface AuthState {
   logout: () => void;
 }
 
+const getInitialState = () => {
+  const token = localStorage.getItem("token")
+  const userStr = localStorage.getItem("user")
+
+  if (!token || !userStr) {
+    return { user: null, token: null, isAuthenticated: false }
+  }
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const isExpired = (payload.exp * 1000) < Date.now();
+
+    if (isExpired) {
+      console.log("Token expired! Sweeping local storage..")
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+
+      return { user: null, token: null, isAuthenticated: false }
+    }
+
+    return {
+      user: JSON.parse(userStr),
+      token,
+      isAuthenticated: true
+    }
+  } catch (error) {
+    return { user: null, token: null, isAuthenticated: false }
+  }
+}
+
+const initialState = getInitialState()
+
 export const useAuthStore = create<AuthState>((set) => ({
-  user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null,
-  token: localStorage.getItem("token") || null,
+  user: initialState.user,
+  token: initialState.token,
   isLoading: false,
-  isAuthenticated: !!localStorage.getItem("token"),
+  isAuthenticated: initialState.isAuthenticated,
 
   login: async (username, password) => {
     set({ isLoading: true });
