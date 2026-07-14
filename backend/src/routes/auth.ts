@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import crypto from 'crypto'
-import { MOCK_USERS_DB, UserRow } from '../data/db'
+import db from '../data/db'
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_key";
@@ -16,7 +16,10 @@ router.post("/register", async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ message: "Username and password are required." })
     }
 
-    const userExists = MOCK_USERS_DB.find((u) => u.username === username)
+
+    const checkUser = db.prepare("SELECT * FROM users WHERE username = ?");
+    const userExists = checkUser.get(username);
+
     if (userExists) {
       return res.status(400).json({ message: "Username already taken" })
     }
@@ -24,12 +27,8 @@ router.post("/register", async (req: Request, res: Response): Promise<any> => {
     const salt = await bcrypt.genSalt(10)
     const hashPassword = await bcrypt.hash(password, salt);
 
-    const newUser: UserRow = {
-      id: crypto.randomUUID(),
-      username,
-      passwordHash: hashPassword,
-    }
-    MOCK_USERS_DB.push(newUser)
+    const insertUser = db.prepare('INSERT INTO users (id, username, passwordHash) VALUES (?, ?, ?)')
+    insertUser.run(crypto.randomUUID(), username, hashPassword)
 
     return res.status(201).json({ message: "User Registered Successfully!" })
   } catch (error) {
@@ -41,7 +40,9 @@ router.post("/login", async (req: Request, res: Response): Promise<any> => {
   try {
     const { username, password } = req.body
 
-    const user = MOCK_USERS_DB.find((u) => u.username === username)
+    const findUser = db.prepare('SELECT * FROM users WHERE username = ?')
+    const user = findUser.get(username) as any;
+
     if (!user) {
       return res.status(400).json({ message: "Invalid username or password." })
     }
