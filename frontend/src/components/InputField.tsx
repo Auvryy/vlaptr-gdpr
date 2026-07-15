@@ -16,7 +16,7 @@ export default function InputField(props: InputProps) {
         type={props.type}
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
-        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus-border-purple-500 transition-colors duration-200"
+        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 pl-12 text-white placeholder-slate-600 focus:outline-none focus-border-purple-500 transition-colors duration-200"
         placeholder={`Enter your ${props.label.toLowerCase()}`}
       />
     </div>
