@@ -19,6 +19,17 @@ db.exec(`
     imageUrl TEXT,
     stock INTEGER
   );
+  
+  CREATE TABLE IF NOT EXISTS cart_items (
+    id TEXT PRIMARY KEY,
+    userId TEXT,
+    productId TEXT,
+    quantity INTEGER DEFAULT 1,
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE (userId, productId)
+  );
 `)
 
 const checkProducts = db.prepare("SELECT COUNT(*) as count FROM products")

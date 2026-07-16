@@ -1,5 +1,6 @@
 import dotenv from "dotenv"
 import db from "./db"
+import { supabase } from './supabase'
 
 dotenv.config()
 const USE_MOCK_DB = process.env.USE_MOCK_DB === 'true'
@@ -14,6 +15,15 @@ export const fetchAllProducts = async () => {
 
   } else {
     console.log('fetching from live database');
-    return []
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+
+    if (error) {
+      console.error(`Supabase error. ${error.message}`)
+      throw error
+    }
+
+    return products || []
   }
 }
