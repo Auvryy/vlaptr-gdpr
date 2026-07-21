@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import dotenv from 'dotenv'
 import db from '../data/db'
 import { supabase } from '../data/supabase'
+import { error } from 'console'
 
 dotenv.config()
 const router = Router()
@@ -93,6 +94,60 @@ router.post("/add", async (req: Request, res: Response): Promise<any> => {
     console.log(`error addint to cart: ${error}`)
     return res.status(500).json({ message: "server error adding to cart" })
 
+  }
+})
+
+router.delete("/remove/:cartItemId", async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { cartItemId } = req.params
+    if (USE_MOCK_DB) {
+      console.log("removing item from local db")
+      const deleteItem = db.prepare('DELETE FROM cart_items WHERE id = ?')
+      deleteItem.run(cartItemId)
+    } else {
+      console.log('removing item from supabase')
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('id', cartItemId)
+
+      if (error) {
+        console.error("supabase delete error: ", error)
+        throw error;
+      }
+    }
+
+    return res.status(200).json({ message: 'item removed from cart' })
+  } catch (error) {
+    console.error('error removing item ', error)
+    return res.status(500).json({ message: 'server error removing item' })
+  }
+})
+
+router.delete('/clear/:userId', async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { userId } = req.params
+
+    if (USE_MOCK_DB) {
+      console.log('clearing cart in local db')
+      const clearCart = db.prepare('DELETE from cart_items WHERE userId = ?')
+      clearCart.run(userId)
+    } else {
+      console.log('clearing cart from supabase')
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('userId', userId)
+
+      if (error) {
+        console.error('supabase clear cart errror', error)
+        throw error
+      }
+    }
+    return res.status(200).json({ message: 'cart cleared successfully' })
+  } catch (error) {
+    console.error('error clearing cart', error)
+    return res.status(500).json({ message: 'server error clearing cart' })
   }
 })
 
